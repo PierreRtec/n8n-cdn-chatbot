@@ -638,8 +638,23 @@
 
   if (config.initialMessage) {
     // Afficher le message initial
+    const initialMessage = document.createElement("div");
+    initialMessage.className = "chat-message bot";
+    initialMessage.innerHTML = renderMarkdown(config.branding.initialMessage);
+    messagesContainer.appendChild(initialMessage);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    config.events.onMessage(config.branding.initialMessage);
+    config.events.onOpen();
   }
   if (config.placeholder) {
     textarea.placeholder = config.placeholder;
+    textarea.style.height = config.style.inputHeight;
+    textarea.style.borderRadius = config.style.borderRadius;
+    textarea.style.border = `1px solid ${config.style.borderColor}`;
+    textarea.style.padding = config.style.inputPadding;
+    textarea.style.fontSize = config.style.fontSize;
+    textarea.style.fontFamily = config.style.fontFamily;
+    textarea.style.color = config.style.fontColor;
+    textarea.style.backgroundColor = config.style.backgroundColor;
   }
 })();
