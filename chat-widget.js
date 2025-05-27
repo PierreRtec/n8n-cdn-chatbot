@@ -393,18 +393,40 @@
   // Merge user config with defaults
   const config = window.ChatWidgetConfig
     ? {
+        // Prend les propriétés au niveau racine
+        ...window.ChatWidgetConfig,
+        // Fusionne les sous-objets
         webhook: {
           ...defaultConfig.webhook,
-          ...window.ChatWidgetConfig.webhook,
+          ...(window.ChatWidgetConfig.webhook || {}),
         },
         branding: {
           ...defaultConfig.branding,
-          ...window.ChatWidgetConfig.branding,
+          ...(window.ChatWidgetConfig.branding || {}),
+          // Prend les propriétés au niveau racine si elles existent
+          initialMessage:
+            window.ChatWidgetConfig.initialMessage ||
+            defaultConfig.branding.initialMessage,
+          placeholder:
+            window.ChatWidgetConfig.placeholder ||
+            defaultConfig.branding.placeholder,
+          sendButtonText:
+            window.ChatWidgetConfig.sendButtonText ||
+            defaultConfig.branding.sendButtonText,
+          startButtonText:
+            window.ChatWidgetConfig.startButtonText ||
+            defaultConfig.branding.startButtonText,
+          closeButtonText:
+            window.ChatWidgetConfig.closeButtonText ||
+            defaultConfig.branding.closeButtonText,
         },
-        style: { ...defaultConfig.style, ...window.ChatWidgetConfig.style },
+        style: {
+          ...defaultConfig.style,
+          ...(window.ChatWidgetConfig.style || {}),
+        },
         behavior: {
           ...defaultConfig.behavior,
-          ...window.ChatWidgetConfig.behavior,
+          ...(window.ChatWidgetConfig.behavior || {}),
         },
       }
     : defaultConfig;
@@ -532,52 +554,99 @@
       chatInterface.classList.add("active");
 
       messagesContainer.innerHTML = "";
-      const initialMessage = document.createElement("div");
-      initialMessage.className = "chat-message bot";
-      initialMessage.innerHTML = renderMarkdown(config.branding.initialMessage);
-      messagesContainer.appendChild(initialMessage);
+      if (config.branding.initialMessage) {
+        const initialMessage = document.createElement("div");
+        initialMessage.className = "chat-message bot";
+        initialMessage.innerHTML = renderMarkdown(
+          config.branding.initialMessage
+        );
+        messagesContainer.appendChild(initialMessage);
+      }
     } catch (error) {
       console.error("Error:", error);
     }
   }
 
   async function sendMessage(message) {
-    const messageData = {
-      action: "sendMessage",
-      sessionId: currentSessionId,
-      route: config.webhook.route,
-      chatInput: message,
-      metadata: {
-        userId: "",
-      },
-    };
+    let retryCount = 0;
+    const maxRetries = config.behavior.errorHandling?.maxRetries || 3;
 
-    const userMessageDiv = document.createElement("div");
-    userMessageDiv.className = "chat-message user";
-    userMessageDiv.textContent = message;
-    messagesContainer.appendChild(userMessageDiv);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    while (retryCount < maxRetries) {
+      try {
+        if (config.events.onMessage) {
+          config.events.onMessage(message);
+        }
+        const messageData = {
+          action: "sendMessage",
+          sessionId: currentSessionId,
+          route: config.webhook.route,
+          chatInput: message,
+          metadata: {
+            userId: "",
+          },
+        };
 
-    try {
-      const response = await fetch(config.webhook.url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(messageData),
-      });
+        const userMessageDiv = document.createElement("div");
+        userMessageDiv.className = "chat-message user";
+        userMessageDiv.textContent = message;
+        messagesContainer.appendChild(userMessageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-      const data = await response.json();
+        // Ajouter l'indicateur de typing
+        if (config.behavior.showTypingIndicator) {
+          const typingDiv = document.createElement("div");
+          typingDiv.className = "typing-indicator";
+          typingDiv.innerHTML = "<span></span><span></span><span></span>";
+          messagesContainer.appendChild(typingDiv);
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
 
-      const botMessageDiv = document.createElement("div");
-      botMessageDiv.className = "chat-message bot";
-      botMessageDiv.textContent = Array.isArray(data)
-        ? data[0].output
-        : data.output;
-      messagesContainer.appendChild(botMessageDiv);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    } catch (error) {
-      console.error("Error:", error);
+        const response = await fetch(config.webhook.url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(messageData),
+        });
+
+        // Supprimer l'indicateur de typing
+        const typingIndicator =
+          messagesContainer.querySelector(".typing-indicator");
+        if (typingIndicator) {
+          typingIndicator.remove();
+        }
+
+        const data = await response.json();
+
+        const botMessageDiv = document.createElement("div");
+        botMessageDiv.className = "chat-message bot";
+        botMessageDiv.textContent = Array.isArray(data)
+          ? data[0].output
+          : data.output;
+        messagesContainer.appendChild(botMessageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        break; // Si succès, sort de la boucle
+      } catch (error) {
+        retryCount++;
+        if (config.events.onError) {
+          config.events.onError(error);
+        }
+        if (
+          retryCount === maxRetries ||
+          !config.behavior.errorHandling?.retryOnError
+        ) {
+          if (config.behavior.errorHandling?.showErrorMessages) {
+            const errorMessage = document.createElement("div");
+            errorMessage.className = "chat-message error";
+            errorMessage.textContent =
+              "Une erreur est survenue. Veuillez réessayer.";
+            messagesContainer.appendChild(errorMessage);
+          }
+          break;
+        }
+        // Attendre avant de réessayer
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
+      }
     }
   }
 
@@ -603,7 +672,9 @@
   });
 
   toggleButton.addEventListener("click", () => {
-    config.events.onOpen();
+    if (config.events.onOpen) {
+      config.events.onOpen();
+    }
     chatContainer.classList.toggle("open");
   });
 
@@ -611,6 +682,9 @@
   const closeButtons = chatContainer.querySelectorAll(".close-button");
   closeButtons.forEach((button) => {
     button.addEventListener("click", () => {
+      if (config.events.onClose) {
+        config.events.onClose();
+      }
       chatContainer.classList.remove("open");
     });
   });
@@ -634,27 +708,5 @@
       return marked.parse(text, options);
     }
     return text;
-  }
-
-  if (config.initialMessage) {
-    // Afficher le message initial
-    const initialMessage = document.createElement("div");
-    initialMessage.className = "chat-message bot";
-    initialMessage.innerHTML = renderMarkdown(config.branding.initialMessage);
-    messagesContainer.appendChild(initialMessage);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    config.events.onMessage(config.branding.initialMessage);
-    config.events.onOpen();
-  }
-  if (config.placeholder) {
-    textarea.placeholder = config.placeholder;
-    textarea.style.height = config.style.inputHeight;
-    textarea.style.borderRadius = config.style.borderRadius;
-    textarea.style.border = `1px solid ${config.style.borderColor}`;
-    textarea.style.padding = config.style.inputPadding;
-    textarea.style.fontSize = config.style.fontSize;
-    textarea.style.fontFamily = config.style.fontFamily;
-    textarea.style.color = config.style.fontColor;
-    textarea.style.backgroundColor = config.style.backgroundColor;
   }
 })();
