@@ -623,6 +623,8 @@
           typingDiv = document.createElement("div");
           typingDiv.className = "typing-indicator";
           typingDiv.innerHTML = "<span></span><span></span><span></span>";
+          typingDiv.style.animationDuration =
+            config.style.typingAnimationDuration || "1.5s";
           messagesContainer.appendChild(typingDiv);
           scrollToBottom();
         }
@@ -718,12 +720,6 @@
   textarea.style.height = config.style.inputHeight;
   sendButton.textContent = config.branding.sendButtonText || "Envoyer";
   newChatBtn.textContent = config.branding.startButtonText || "Démarrer";
-
-  if (config.behavior.showTypingIndicator) {
-    const typingIndicator = chatContainer.querySelector(".typing-indicator");
-    typingIndicator.style.animationDuration =
-      config.style.typingAnimationDuration;
-  }
 
   function renderMarkdown(text) {
     if (!text) return "";
