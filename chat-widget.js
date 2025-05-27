@@ -635,4 +635,11 @@
     }
     return text;
   }
+
+  if (config.initialMessage) {
+    // Afficher le message initial
+  }
+  if (config.placeholder) {
+    textarea.placeholder = config.placeholder;
+  }
 })();
