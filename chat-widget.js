@@ -618,34 +618,36 @@
         scrollToBottom();
 
         // Ajouter l'indicateur de typing
+        let typingDiv;
         if (config.behavior.showTypingIndicator) {
-          const typingDiv = document.createElement("div");
+          typingDiv = document.createElement("div");
           typingDiv.className = "typing-indicator";
           typingDiv.innerHTML = "<span></span><span></span><span></span>";
           messagesContainer.appendChild(typingDiv);
           scrollToBottom();
         }
 
-        // Créer le message du bot avant de recevoir la réponse
+        // Faire le fetch ici !
+        const response = await fetch(config.webhook.url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(messageData),
+        });
+
+        // Supprimer l'indicateur de typing
+        if (typingDiv) typingDiv.remove();
+
+        // Lire la réponse JSON
+        const data = await response.json();
+        let output = Array.isArray(data) ? data[0].output : data.output;
+        if (typeof output === "object") output = output.output;
+
+        // Afficher la réponse du bot
         const botMessageDiv = document.createElement("div");
         botMessageDiv.className = "chat-message bot";
+        botMessageDiv.innerHTML = renderMarkdown(output);
         messagesContainer.appendChild(botMessageDiv);
-
-        // Lire la réponse en streaming
-        const reader = response.body.getReader();
-        let decoder = new TextDecoder();
-        let buffer = "";
-
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          let output = Array.isArray(data) ? data[0].output : data.output;
-          if (typeof output === "object") output = output.output; // Si jamais c'est encore un objet
-          botMessageDiv.innerHTML = renderMarkdown(output);
-          scrollToBottom();
-        }
+        scrollToBottom();
 
         break; // Si succès, sort de la boucle
       } catch (error) {
