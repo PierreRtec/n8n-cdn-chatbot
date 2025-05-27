@@ -383,14 +383,14 @@
                 <span>${config.branding.name}</span>
                 <button class="close-button">×</button>
             </div>
-            <div class="chat-messages"></div>
+            <div class="chat-messages">Commencez par saisir votre SIREN</div>
             <div class="chat-input">
                 <textarea placeholder="Entrez votre message ici..." rows="1"></textarea>
                 <button type="submit">Envoyer</button>
             </div>
-            <div class="chat-footer">
-                <a href="${config.branding.poweredBy.link}" target="_blank">${config.branding.poweredBy.text}</a>
-            </div>
+            // <div class="chat-footer">
+            //     <a href="${config.branding.poweredBy.link}" target="_blank">${config.branding.poweredBy.text}</a>
+            // </div>
         </div>
     `;
 
