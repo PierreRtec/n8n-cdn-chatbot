@@ -185,6 +185,7 @@
             border-top: 1px solid rgba(133, 79, 255, 0.1);
             display: flex;
             gap: 8px;
+            align-items: stretch;
         }
 
         .n8n-chat-widget .chat-input textarea {
@@ -198,6 +199,9 @@
             font-family: inherit;
             font-size: 14px;
             height: 40px !important;
+            min-height: 40px !important;
+            max-height: 40px !important;
+            box-sizing: border-box;
         }
 
         .n8n-chat-widget .chat-input textarea::placeholder {
@@ -217,6 +221,8 @@
             font-weight: 500;
             height: 40px !important;
             min-width: 80px;
+            box-sizing: border-box;
+            margin-left: 8px;
         }
 
         .n8n-chat-widget .chat-input button:hover {
@@ -483,7 +489,7 @@
                 <svg class="message-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.2L4 17.2V4h16v12z"/>
                 </svg>
-                ${config.branding.startButtonText}
+                ${config.branding.startButtonText || "Démarrer"}
             </button>
             <p class="response-text">${config.branding.responseTimeText}</p>
         </div>
@@ -492,14 +498,22 @@
   const chatInterfaceHTML = `
         <div class="chat-interface">
             <div class="brand-header">
-                <img src="${config.branding.logo}" alt="${config.branding.name}">
+                <img src="${config.branding.logo}" alt="${
+    config.branding.name
+  }">
                 <span>${config.branding.name}</span>
                 <button class="close-button">×</button>
             </div>
             <div class="chat-messages"></div>
             <div class="chat-input">
-                <textarea placeholder="${config.branding.placeholder}" rows="1" style="height: ${config.style.inputHeight};"></textarea>
-                <button type="submit">${config.branding.sendButtonText}</button>
+                <textarea placeholder="${
+                  config.branding.placeholder || "Votre message..."
+                }" rows="1" style="height: ${
+    config.style.inputHeight
+  };"></textarea>
+                <button type="submit">${
+                  config.branding.sendButtonText || "Envoyer"
+                }</button>
             </div>
         </div>
     `;
@@ -698,10 +712,10 @@
   });
 
   // Apply additional styles
-  textarea.placeholder = config.branding.placeholder;
+  textarea.placeholder = config.branding.placeholder || "Votre message...";
   textarea.style.height = config.style.inputHeight;
-  sendButton.textContent = config.branding.sendButtonText;
-  newChatBtn.textContent = config.branding.startButtonText;
+  sendButton.textContent = config.branding.sendButtonText || "Envoyer";
+  newChatBtn.textContent = config.branding.startButtonText || "Démarrer";
 
   if (config.behavior.showTypingIndicator) {
     const typingIndicator = chatContainer.querySelector(".typing-indicator");
