@@ -9,7 +9,7 @@
             --chat--color-font: var(--n8n-chat-font-color, #333333);
             --chat--color-light: var(--n8n-chat-light-color, #f0f0f0);
             --chat--color-typing: var(--n8n-chat-typing-color, #007bff);
-            font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         }
 
         .n8n-chat-widget .chat-container {
@@ -303,7 +303,7 @@
   const fontLink = document.createElement("link");
   fontLink.rel = "stylesheet";
   fontLink.href =
-    "https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/style.css";
+    "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap";
   document.head.appendChild(fontLink);
 
   // Inject styles
@@ -564,6 +564,17 @@
     }
   }
 
+  function scrollToBottom() {
+    if (config.behavior.scrollToBottom) {
+      requestAnimationFrame(() => {
+        messagesContainer.scrollTo({
+          top: messagesContainer.scrollHeight,
+          behavior: "smooth",
+        });
+      });
+    }
+  }
+
   async function sendMessage(message) {
     let retryCount = 0;
     const maxRetries = config.behavior.errorHandling?.maxRetries || 3;
@@ -587,7 +598,7 @@
         userMessageDiv.className = "chat-message user";
         userMessageDiv.textContent = message;
         messagesContainer.appendChild(userMessageDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        scrollToBottom();
 
         // Ajouter l'indicateur de typing
         if (config.behavior.showTypingIndicator) {
@@ -595,7 +606,7 @@
           typingDiv.className = "typing-indicator";
           typingDiv.innerHTML = "<span></span><span></span><span></span>";
           messagesContainer.appendChild(typingDiv);
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+          scrollToBottom();
         }
 
         const response = await fetch(config.webhook.url, {
@@ -628,7 +639,7 @@
           buffer += decoder.decode(value, { stream: true });
           // Mettre à jour le message avec le buffer
           botMessageDiv.innerHTML = renderMarkdown(buffer);
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+          scrollToBottom();
         }
 
         break; // Si succès, sort de la boucle
@@ -710,11 +721,10 @@
   function renderMarkdown(text) {
     if (!text) return "";
 
-    if (config.behavior.enableMarkdown) {
+    if (config.behavior.enableMarkdown && typeof marked !== "undefined") {
       try {
         const options = {
           ...config.behavior.markdownOptions,
-          // Options supplémentaires pour un meilleur rendu
           headerIds: false,
           mangle: false,
           pedantic: false,
@@ -726,12 +736,11 @@
           xhtml: false,
         };
 
-        // Nettoyer le texte avant le rendu
         const cleanText = text.replace(/\\n/g, "\n").trim();
         return marked.parse(cleanText, options);
       } catch (error) {
         console.error("Markdown rendering error:", error);
-        return text; // Retourner le texte brut en cas d'erreur
+        return text;
       }
     }
     return text;
