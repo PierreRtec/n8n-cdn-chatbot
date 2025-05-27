@@ -197,6 +197,7 @@
             resize: none;
             font-family: inherit;
             font-size: 14px;
+            height: 40px !important;
         }
 
         .n8n-chat-widget .chat-input textarea::placeholder {
@@ -214,6 +215,8 @@
             transition: transform 0.2s;
             font-family: inherit;
             font-weight: 500;
+            height: 40px !important;
+            min-width: 80px;
         }
 
         .n8n-chat-widget .chat-input button:hover {
@@ -609,19 +612,6 @@
           scrollToBottom();
         }
 
-        const response = await fetch(config.webhook.url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(messageData),
-        });
-
-        // Supprimer l'indicateur de typing
-        const typingIndicator =
-          messagesContainer.querySelector(".typing-indicator");
-        if (typingIndicator) {
-          typingIndicator.remove();
-        }
-
         // Créer le message du bot avant de recevoir la réponse
         const botMessageDiv = document.createElement("div");
         botMessageDiv.className = "chat-message bot";
@@ -637,8 +627,9 @@
           if (done) break;
 
           buffer += decoder.decode(value, { stream: true });
-          // Mettre à jour le message avec le buffer
-          botMessageDiv.innerHTML = renderMarkdown(buffer);
+          let output = Array.isArray(data) ? data[0].output : data.output;
+          if (typeof output === "object") output = output.output; // Si jamais c'est encore un objet
+          botMessageDiv.innerHTML = renderMarkdown(output);
           scrollToBottom();
         }
 
