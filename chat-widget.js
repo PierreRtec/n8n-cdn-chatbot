@@ -7,6 +7,8 @@
             --chat--color-secondary: var(--n8n-chat-secondary-color, #6b3fd4);
             --chat--color-background: var(--n8n-chat-background-color, #ffffff);
             --chat--color-font: var(--n8n-chat-font-color, #333333);
+            --chat--color-light: var(--n8n-chat-light-color, #f0f0f0);
+            --chat--color-typing: var(--n8n-chat-typing-color, #007bff);
             font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         }
 
@@ -271,6 +273,30 @@
         .n8n-chat-widget .chat-footer a:hover {
             opacity: 1;
         }
+
+        @keyframes blink { 
+            0%, 80% { opacity: .2; }
+            40% { opacity: 1; }
+        }
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 12px;
+            background: var(--chat--color-light);
+            border-radius: var(--chat--border-radius);
+            margin: 8px 0;
+        }
+        .typing-indicator span {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: var(--chat--color-typing);
+            border-radius: 50%;
+            animation: blink 1.4s infinite;
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
     `;
 
   // Load Geist font
@@ -439,13 +465,11 @@
       chatContainer.querySelector(".new-conversation").style.display = "none";
       chatInterface.classList.add("active");
 
-      const botMessageDiv = document.createElement("div");
-      botMessageDiv.className = "chat-message bot";
-      botMessageDiv.textContent = Array.isArray(responseData)
-        ? responseData[0].output
-        : responseData.output;
-      messagesContainer.appendChild(botMessageDiv);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      messagesContainer.innerHTML = "";
+      const initialMessage = document.createElement("div");
+      initialMessage.className = "chat-message bot";
+      initialMessage.innerHTML = renderMarkdown(config.branding.initialMessage);
+      messagesContainer.appendChild(initialMessage);
     } catch (error) {
       console.error("Error:", error);
     }
