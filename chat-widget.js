@@ -533,26 +533,18 @@
         action: "loadPreviousSession",
         sessionId: currentSessionId,
         route: config.webhook.route,
-        metadata: {
-          userId: "",
-        },
+        metadata: { userId: "" },
       },
     ];
 
     try {
       const response = await fetch(config.webhook.url, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
-      const responseData = await response.json();
-      chatContainer.querySelector(".brand-header").style.display = "none";
-      chatContainer.querySelector(".new-conversation").style.display = "none";
-      chatInterface.classList.add("active");
-
+      // Afficher d'abord le message initial
       messagesContainer.innerHTML = "";
       if (config.branding.initialMessage) {
         const initialMessage = document.createElement("div");
@@ -562,6 +554,11 @@
         );
         messagesContainer.appendChild(initialMessage);
       }
+
+      // Ensuite changer l'interface
+      chatContainer.querySelector(".brand-header").style.display = "none";
+      chatContainer.querySelector(".new-conversation").style.display = "none";
+      chatInterface.classList.add("active");
     } catch (error) {
       console.error("Error:", error);
     }
@@ -603,9 +600,7 @@
 
         const response = await fetch(config.webhook.url, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(messageData),
         });
 
@@ -616,15 +611,26 @@
           typingIndicator.remove();
         }
 
-        const data = await response.json();
-
+        // Créer le message du bot avant de recevoir la réponse
         const botMessageDiv = document.createElement("div");
         botMessageDiv.className = "chat-message bot";
-        botMessageDiv.textContent = Array.isArray(data)
-          ? data[0].output
-          : data.output;
         messagesContainer.appendChild(botMessageDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        // Lire la réponse en streaming
+        const reader = response.body.getReader();
+        let decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          // Mettre à jour le message avec le buffer
+          botMessageDiv.innerHTML = renderMarkdown(buffer);
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
         break; // Si succès, sort de la boucle
       } catch (error) {
         retryCount++;
@@ -702,10 +708,31 @@
   }
 
   function renderMarkdown(text) {
+    if (!text) return "";
+
     if (config.behavior.enableMarkdown) {
-      const options = config.behavior.markdownOptions;
-      // Utiliser marked avec les options
-      return marked.parse(text, options);
+      try {
+        const options = {
+          ...config.behavior.markdownOptions,
+          // Options supplémentaires pour un meilleur rendu
+          headerIds: false,
+          mangle: false,
+          pedantic: false,
+          gfm: true,
+          breaks: true,
+          sanitize: false,
+          smartLists: true,
+          smartypants: true,
+          xhtml: false,
+        };
+
+        // Nettoyer le texte avant le rendu
+        const cleanText = text.replace(/\\n/g, "\n").trim();
+        return marked.parse(cleanText, options);
+      } catch (error) {
+        console.error("Markdown rendering error:", error);
+        return text; // Retourner le texte brut en cas d'erreur
+      }
     }
     return text;
   }
