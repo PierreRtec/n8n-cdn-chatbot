@@ -271,6 +271,20 @@
         .n8n-chat-widget .chat-footer a:hover {
             opacity: 1;
         }
+
+        @keyframes blink { 
+            0%, 80% { opacity: .2; }
+            40% { opacity: 1; }
+        }
+        .typing span {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            margin: 0 2px;
+            background: #333;
+            border-radius: 50%;
+            animation: blink 1.4s infinite;
+        }
     `;
 
   // Load Geist font
@@ -419,6 +433,17 @@
     return crypto.randomUUID();
   }
 
+  function renderMarkdown(text = "") {
+    return text
+      .replace(/^### (.*$)/gim, "<h3>$1</h3>")
+      .replace(/^## (.*$)/gim, "<h2>$1</h2>")
+      .replace(/^# (.*$)/gim, "<h1>$1</h1>")
+      .replace(/^- (.*$)/gim, "<li>$1</li>")
+      .replace(/\*\*(.*?)\*\*/gim, "<strong>$1</strong>")
+      .replace(/\*(.*?)\*/gim, "<em>$1</em>")
+      .replace(/\n/g, "<br/>");
+  }
+
   async function startNewConversation() {
     currentSessionId = generateUUID();
     const data = [
@@ -446,12 +471,12 @@
       chatContainer.querySelector(".new-conversation").style.display = "none";
       chatInterface.classList.add("active");
 
-      const botMessageDiv = document.createElement("div");
-      botMessageDiv.className = "chat-message bot";
-      botMessageDiv.textContent = Array.isArray(responseData)
-        ? responseData[0].output
-        : responseData.output;
-      messagesContainer.appendChild(botMessageDiv);
+      messagesContainer.innerHTML = "";
+      const firstBot = document.createElement("div");
+      firstBot.className = "chat-message bot";
+      firstBot.innerHTML =
+        "Commencez par renseigner votre <strong>SIREN</strong>";
+      messagesContainer.appendChild(firstBot);
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     } catch (error) {
       console.error("Error:", error);
@@ -475,6 +500,12 @@
     messagesContainer.appendChild(userMessageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
+    const typingDiv = document.createElement("div");
+    typingDiv.className = "chat-message bot typing";
+    typingDiv.innerHTML = "<span></span><span></span><span></span>";
+    messagesContainer.appendChild(typingDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
     try {
       const response = await fetch(config.webhook.url, {
         method: "POST",
@@ -486,11 +517,10 @@
 
       const data = await response.json();
 
+      typingDiv.remove();
       const botMessageDiv = document.createElement("div");
       botMessageDiv.className = "chat-message bot";
-      botMessageDiv.textContent = Array.isArray(data)
-        ? data[0].output
-        : data.output;
+      botMessageDiv.innerHTML = renderMarkdown(data.output);
       messagesContainer.appendChild(botMessageDiv);
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     } catch (error) {
