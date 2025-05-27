@@ -329,6 +329,12 @@
       position: "right",
       backgroundColor: "#ffffff",
       fontColor: "#333333",
+      enableTypingAnimation: true,
+      typingAnimationColor: "#333333",
+      typingAnimationDuration: "1s",
+    },
+    behavior: {
+      showTypingIndicator: true,
     },
   };
 
@@ -344,6 +350,10 @@
           ...window.ChatWidgetConfig.branding,
         },
         style: { ...defaultConfig.style, ...window.ChatWidgetConfig.style },
+        behavior: {
+          ...defaultConfig.behavior,
+          ...window.ChatWidgetConfig.behavior,
+        },
       }
     : defaultConfig;
 
