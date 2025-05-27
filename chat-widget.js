@@ -316,12 +316,20 @@
     webhook: {
       url: "",
       route: "",
+      headers: {
+        "Content-Type": "application/json",
+      },
     },
     branding: {
       logo: "",
       name: "",
       welcomeText: "",
       responseTimeText: "",
+      initialMessage: "",
+      placeholder: "",
+      sendButtonText: "",
+      startButtonText: "",
+      closeButtonText: "",
     },
     style: {
       primaryColor: "",
@@ -329,12 +337,56 @@
       position: "right",
       backgroundColor: "#ffffff",
       fontColor: "#333333",
+      borderRadius: "12px",
+      chatWidth: "380px",
+      chatHeight: "600px",
+      fontSize: "14px",
+      messageSpacing: "8px",
+      headerHeight: "64px",
+      inputHeight: "72px",
+      toggleButtonSize: "60px",
       enableTypingAnimation: true,
       typingAnimationColor: "#333333",
-      typingAnimationDuration: "1s",
+      typingAnimationDuration: "1.5s",
+      typingAnimationDots: 3,
+      bottomSpacing: "20px",
+      sideSpacing: "20px",
     },
     behavior: {
+      autoOpen: true,
+      enableMarkdown: true,
+      enableEnterToSend: true,
+      enableShiftEnter: true,
+      scrollToBottom: true,
+      showPoweredBy: false,
+      showCloseButton: true,
+      showStartButton: true,
       showTypingIndicator: true,
+      markdownOptions: {
+        breaks: true,
+        gfm: true,
+        tables: true,
+        sanitize: false,
+        smartLists: true,
+        smartypants: true,
+      },
+      messageOptions: {
+        showTimestamp: true,
+        timestampFormat: "HH:mm",
+        showAvatar: true,
+        showName: true,
+      },
+      errorHandling: {
+        showErrorMessages: true,
+        retryOnError: true,
+        maxRetries: 3,
+      },
+    },
+    events: {
+      onOpen: function () {},
+      onClose: function () {},
+      onMessage: function () {},
+      onError: function () {},
     },
   };
 
@@ -390,6 +442,10 @@
     config.style.position === "left" ? " position-left" : ""
   }`;
 
+  chatContainer.style.width = config.style.chatWidth;
+  chatContainer.style.height = config.style.chatHeight;
+  chatContainer.style.borderRadius = config.style.borderRadius;
+
   const newConversationHTML = `
         <div class="brand-header">
             <img src="${config.branding.logo}" alt="${config.branding.name}">
@@ -402,7 +458,7 @@
                 <svg class="message-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.2L4 17.2V4h16v12z"/>
                 </svg>
-                Démarrer une conversation
+                ${config.branding.startButtonText}
             </button>
             <p class="response-text">${config.branding.responseTimeText}</p>
         </div>
@@ -417,8 +473,8 @@
             </div>
             <div class="chat-messages"></div>
             <div class="chat-input">
-                <textarea placeholder="Entrez votre message ici..." rows="1"></textarea>
-                <button type="submit">Envoyer</button>
+                <textarea placeholder="${config.branding.placeholder}" rows="1" style="height: ${config.style.inputHeight};"></textarea>
+                <button type="submit">${config.branding.sendButtonText}</button>
             </div>
         </div>
     `;
@@ -547,6 +603,7 @@
   });
 
   toggleButton.addEventListener("click", () => {
+    config.events.onOpen();
     chatContainer.classList.toggle("open");
   });
 
@@ -557,4 +614,25 @@
       chatContainer.classList.remove("open");
     });
   });
+
+  // Apply additional styles
+  textarea.placeholder = config.branding.placeholder;
+  textarea.style.height = config.style.inputHeight;
+  sendButton.textContent = config.branding.sendButtonText;
+  newChatBtn.textContent = config.branding.startButtonText;
+
+  if (config.behavior.showTypingIndicator) {
+    const typingIndicator = chatContainer.querySelector(".typing-indicator");
+    typingIndicator.style.animationDuration =
+      config.style.typingAnimationDuration;
+  }
+
+  function renderMarkdown(text) {
+    if (config.behavior.enableMarkdown) {
+      const options = config.behavior.markdownOptions;
+      // Utiliser marked avec les options
+      return marked.parse(text, options);
+    }
+    return text;
+  }
 })();
