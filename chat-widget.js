@@ -3,31 +3,27 @@
   // Create and inject styles
   const styles = `
         .n8n-chat-widget {
-            --chat--color-primary: var(--n8n-chat-primary-color, ${config.style.primaryColor});
-            --chat--color-secondary: var(--n8n-chat-secondary-color, ${config.style.secondaryColor});
-            --chat--color-background: var(--n8n-chat-background-color, ${config.style.backgroundColor});
-            --chat--color-font: var(--n8n-chat-font-color, ${config.style.fontColor});
-            --chat--border-radius: ${config.style.borderRadius};
-            --chat--font-size: ${config.style.fontSize};
-            --chat--message-spacing: ${config.style.messageSpacing};
+            --chat--color-primary: var(--n8n-chat-primary-color, #854fff);
+            --chat--color-secondary: var(--n8n-chat-secondary-color, #6b3fd4);
+            --chat--color-background: var(--n8n-chat-background-color, #ffffff);
+            --chat--color-font: var(--n8n-chat-font-color, #333333);
             font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         }
 
         .n8n-chat-widget .chat-container {
             position: fixed;
-            bottom: ${config.style.bottomSpacing};
-            right: ${config.style.sideSpacing};
+            bottom: 20px;
+            right: 20px;
             z-index: 1000;
             display: none;
-            width: ${config.style.chatWidth};
-            height: ${config.style.chatHeight};
+            width: 380px;
+            height: 600px;
             background: var(--chat--color-background);
-            border-radius: var(--chat--border-radius);
+            border-radius: 12px;
             box-shadow: 0 8px 32px rgba(133, 79, 255, 0.15);
             border: 1px solid rgba(133, 79, 255, 0.2);
             overflow: hidden;
             font-family: inherit;
-            font-size: var(--chat--font-size);
         }
 
         .n8n-chat-widget .chat-container.position-left {
@@ -275,20 +271,6 @@
         .n8n-chat-widget .chat-footer a:hover {
             opacity: 1;
         }
-
-        @keyframes blink { 
-            0%, 80% { opacity: .2; }
-            40% { opacity: 1; }
-        }
-        .typing span {
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            margin: 0 2px;
-            background: #333;
-            border-radius: 50%;
-            animation: blink 1.4s infinite;
-        }
     `;
 
   // Load Geist font
@@ -314,11 +296,6 @@
       name: "",
       welcomeText: "",
       responseTimeText: "",
-      initialMessage: "Commencez par renseigner votre <strong>SIREN</strong>",
-      placeholder: "Entrez votre message ici...",
-      sendButtonText: "Envoyer",
-      startButtonText: "Démarrer une conversation",
-      closeButtonText: "×",
     },
     style: {
       primaryColor: "",
@@ -326,27 +303,6 @@
       position: "right",
       backgroundColor: "#ffffff",
       fontColor: "#333333",
-      borderRadius: "12px",
-      chatWidth: "380px",
-      chatHeight: "600px",
-      fontSize: "14px",
-      messageSpacing: "8px",
-      headerHeight: "64px",
-      inputHeight: "72px",
-      toggleButtonSize: "60px",
-      enableTypingAnimation: true,
-      typingAnimationColor: "#333333",
-      bottomSpacing: "20px",
-      sideSpacing: "20px",
-    },
-    behavior: {
-      autoOpen: false,
-      enableMarkdown: true,
-      enableEnterToSend: true,
-      enableShiftEnter: true,
-      scrollToBottom: true,
-      showCloseButton: true,
-      showStartButton: true,
     },
   };
 
@@ -362,10 +318,6 @@
           ...window.ChatWidgetConfig.branding,
         },
         style: { ...defaultConfig.style, ...window.ChatWidgetConfig.style },
-        behavior: {
-          ...defaultConfig.behavior,
-          ...window.ChatWidgetConfig.behavior,
-        },
       }
     : defaultConfig;
 
@@ -403,54 +355,34 @@
   }`;
 
   const newConversationHTML = `
-        <div class="brand-header" style="height: ${config.style.headerHeight}">
+        <div class="brand-header">
             <img src="${config.branding.logo}" alt="${config.branding.name}">
             <span>${config.branding.name}</span>
-            ${
-              config.behavior.showCloseButton
-                ? `<button class="close-button">${config.branding.closeButtonText}</button>`
-                : ""
-            }
+            <button class="close-button">×</button>
         </div>
         <div class="new-conversation">
             <h2 class="welcome-text">${config.branding.welcomeText}</h2>
-            ${
-              config.behavior.showStartButton
-                ? `
             <button class="new-chat-btn">
                 <svg class="message-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.2L4 17.2V4h16v12z"/>
                 </svg>
-                ${config.branding.startButtonText}
+                Démarrer une conversation
             </button>
-            `
-                : ""
-            }
             <p class="response-text">${config.branding.responseTimeText}</p>
         </div>
     `;
 
   const chatInterfaceHTML = `
         <div class="chat-interface">
-            <div class="brand-header" style="height: ${
-              config.style.headerHeight
-            }">
-                <img src="${config.branding.logo}" alt="${
-    config.branding.name
-  }">
+            <div class="brand-header">
+                <img src="${config.branding.logo}" alt="${config.branding.name}">
                 <span>${config.branding.name}</span>
-                ${
-                  config.behavior.showCloseButton
-                    ? `<button class="close-button">${config.branding.closeButtonText}</button>`
-                    : ""
-                }
+                <button class="close-button">×</button>
             </div>
-            <div class="chat-messages">${config.branding.initialMessage}</div>
-            <div class="chat-input" style="height: ${config.style.inputHeight}">
-                <textarea placeholder="${
-                  config.branding.placeholder
-                }" rows="1"></textarea>
-                <button type="submit">${config.branding.sendButtonText}</button>
+            <div class="chat-messages"></div>
+            <div class="chat-input">
+                <textarea placeholder="Entrez votre message ici..." rows="1"></textarea>
+                <button type="submit">Envoyer</button>
             </div>
         </div>
     `;
@@ -480,17 +412,6 @@
     return crypto.randomUUID();
   }
 
-  function renderMarkdown(text = "") {
-    return text
-      .replace(/^### (.*$)/gim, "<h3>$1</h3>")
-      .replace(/^## (.*$)/gim, "<h2>$1</h2>")
-      .replace(/^# (.*$)/gim, "<h1>$1</h1>")
-      .replace(/^- (.*$)/gim, "<li>$1</li>")
-      .replace(/\*\*(.*?)\*\*/gim, "<strong>$1</strong>")
-      .replace(/\*(.*?)\*/gim, "<em>$1</em>")
-      .replace(/\n/g, "<br/>");
-  }
-
   async function startNewConversation() {
     currentSessionId = generateUUID();
     const data = [
@@ -518,12 +439,12 @@
       chatContainer.querySelector(".new-conversation").style.display = "none";
       chatInterface.classList.add("active");
 
-      messagesContainer.innerHTML = "";
-      const firstBot = document.createElement("div");
-      firstBot.className = "chat-message bot";
-      firstBot.innerHTML =
-        "Commencez par renseigner votre <strong>SIREN</strong>";
-      messagesContainer.appendChild(firstBot);
+      const botMessageDiv = document.createElement("div");
+      botMessageDiv.className = "chat-message bot";
+      botMessageDiv.textContent = Array.isArray(responseData)
+        ? responseData[0].output
+        : responseData.output;
+      messagesContainer.appendChild(botMessageDiv);
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     } catch (error) {
       console.error("Error:", error);
@@ -547,12 +468,6 @@
     messagesContainer.appendChild(userMessageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-    const typingDiv = document.createElement("div");
-    typingDiv.className = "chat-message bot typing";
-    typingDiv.innerHTML = "<span></span><span></span><span></span>";
-    messagesContainer.appendChild(typingDiv);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
     try {
       const response = await fetch(config.webhook.url, {
         method: "POST",
@@ -564,14 +479,11 @@
 
       const data = await response.json();
 
-      typingDiv.remove();
       const botMessageDiv = document.createElement("div");
       botMessageDiv.className = "chat-message bot";
-      if (config.behavior.enableMarkdown) {
-        botMessageDiv.innerHTML = renderMarkdown(data.output);
-      } else {
-        botMessageDiv.textContent = data.output;
-      }
+      botMessageDiv.textContent = Array.isArray(data)
+        ? data[0].output
+        : data.output;
       messagesContainer.appendChild(botMessageDiv);
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     } catch (error) {
@@ -590,11 +502,7 @@
   });
 
   textarea.addEventListener("keypress", (e) => {
-    if (
-      config.behavior.enableEnterToSend &&
-      e.key === "Enter" &&
-      !(config.behavior.enableShiftEnter && e.shiftKey)
-    ) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       const message = textarea.value.trim();
       if (message) {
@@ -615,9 +523,4 @@
       chatContainer.classList.remove("open");
     });
   });
-
-  // Auto-open if configured
-  if (config.behavior.autoOpen) {
-    chatContainer.classList.add("open");
-  }
 })();
